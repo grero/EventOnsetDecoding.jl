@@ -5,10 +5,8 @@ version = "0.1.0"
 
 [deps]
 CRC32c = "8bf52ea8-c179-5cab-976a-9e18b702a9bc"
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataProcessingHierarchyTools = "c4d60adb-60c8-55d6-9a12-9d581dce3acf"
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
-Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 MultivariateStats = "6f286f6a-111f-5878-ab1e-185364afe411"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
