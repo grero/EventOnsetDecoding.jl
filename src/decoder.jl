@@ -673,7 +673,7 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 							if !args.in_target_space
 								# if we are in target space, we have already done PCA
 								_pca = MultivariateStats.fit(PCA, permutedims(Xr5[1:nc*nll,:,location],[2,1]))
-								Xrp = permutedims(MultivariateStats.transform(_pca, permutedims(Xr5[1:nc*nll, :, location], [2,1])), [2,1])
+								Xrp = permutedims(MultivariateStats.predict(_pca, permutedims(Xr5[1:nc*nll, :, location], [2,1])), [2,1])
 
 								W,p = train_decoder(decoder, Xrp, Yr2[1:nc*nll, location])
 								proj[:,1:size(W.proj,2), wi, li, il, r] .= _pca.proj*W.proj
@@ -721,7 +721,7 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 							midx = searchsortedfirst(testbins[1+wl:end], bins[midx])
 							for i in 1:size(Q,2)
 								for j in 1:size(Q,1)
-									#y = MultivariateStats.transform(_pca,Ytest2[:,lidx[i],j])
+									#y = MultivariateStats.predict(_pca,Ytest2[:,lidx[i],j])
 									#q = [y;1.0]'*W
 									if args.difference_decoder
 										#TODO: Include pre-cue here
@@ -1001,7 +1001,7 @@ function get_posterior(_pca, W::Matrix{T}, X::Array{T,3}, lidx::Vector{Int64}) w
 	for i in 1:size(Q,2)
 		lidxi = lidx[i]
 		for j in 1:size(Q,1)
-			Xp[1:end-1] .= MultivariateStats.transform(_pca,X[:,lidxi,j])
+			Xp[1:end-1] .= MultivariateStats.predict(_pca,X[:,lidxi,j])
 			q = Xp'*W
 			Q[j,i] = argmax(q[:])
 		end
@@ -1013,20 +1013,20 @@ end
 Get the posterior when using regression, in which the projection onto the matrix `W` is analogous to the posterior
 """
 function get_posterior(W::Matrix{Float64}, X::AbstractVector{Float64})
-	MultivariateStats.transform(W, X)
+	MultivariateStats.predict(W, X)
 end
 
 """
 Get the posterior equivalent for a trained LDA, which we have to first compute the distance to each class
 """
 function get_posterior(pca, lda::MultivariateStats.MulticlassLDA, X::AbstractVector{Float64})
-	y = MultivariateStats.transform(pca, X)
-	q = MultivariateStats.transform(lda, y)
+	y = MultivariateStats.predict(pca, X)
+	q = MultivariateStats.predict(lda, y)
 	d = -dropdims(sum(abs2, q .- lda.pmeans, dims=1),dims=1)
 end
 
 function get_posterior(lda::MultivariateStats.MulticlassLDA, X::AbstractVector{Float64})
-	q = MultivariateStats.transform(lda, X)
+	q = MultivariateStats.predict(lda, X)
 	d = -dropdims(sum(abs2, q .- lda.pmeans, dims=1),dims=1)
 end
 
@@ -1035,7 +1035,7 @@ function train_decoder(decoder::Type{MultivariateStats.MulticlassLDA}, X::Matrix
 	ntrials,nvars = size(X)
 	Xp = permutedims(X,[2,1])
 	lda = MultivariateStats.fit(MultivariateStats.MulticlassLDA, Xp, Y)
-	Xpp = MultivariateStats.transform(lda, Xp)
+	Xpp = MultivariateStats.predict(lda, Xp)
 	pp = fill(0.0, ncats, ntrials)
 	for k in 1:ntrials
 		for i in 1:ncats
