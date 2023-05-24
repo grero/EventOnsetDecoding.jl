@@ -225,7 +225,8 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 							  RNGType::Type{T2}=MersenneTwister,
 							  progress_tracker::Union{Nothing, Progress}=nothing,
 							  num_cells::Union{Nothing, Int64}=nothing, do_save=true,
-							  stop_task::Threads.Atomic{Bool}=Threads.Atomic{Bool}(false)) where T2 <: AbstractRNG
+							  stop_task::Threads.Atomic{Bool}=Threads.Atomic{Bool}(false)
+							  ) where T2 <: AbstractRNG
 
 	if rseeds === nothing
 		RNGs = [RNGType(rand(UInt32)) for i in 1:args.nruns]
