@@ -290,7 +290,7 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 			end
 			if args.shuffle_latency & args.shuffle_each_trial & args.at_source
 				for i in 1:size(X,2)
-					Δ = rand(l0:l1)
+					Δ = rand(RNGs[1], l0:l1)
 					for j in 1:size(X,3)
 						X[:,i,j] = circshift(X[:,i,j], Δ)
 					end
@@ -346,7 +346,7 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 		if args.at_source
 			# do whatever shuffling we are supposed to do at the source
 			if args.shuffle_latency & !args.shuffle_each_trial
-				Δ = rand(l0:l1)
+				Δ = rand(RNGs[1], l0:l1)
 				Xtot2 = circshift(Xtot, (Δ, 0, 0))
 			end
 		end
@@ -395,10 +395,10 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 					@info "Stopping thread $(Threads.threaid) of $(Threads.nthreads())"
 					break
 				end
-				qrng = MersenneTwister(rand(UInt32))
+				qrng = RNGs[r]
 				# private copy for each thread so that we can shuffle it
 				# TODO: Include post-cue response as well.
-				Yt, train_label,test_label =  sample_trials(permutedims(Xtot2, [3,2,1]), label_tot;RNG=RNGs[r],ntrain=args.ntrain, ntest=args.ntest)
+				Yt, train_label,test_label =  sample_trials(permutedims(Xtot2, [3,2,1]), label_tot;RNG=qrng,ntrain=args.ntrain, ntest=args.ntest)
 				@assert size(Yt,1) == size(Xtot2, 1)
 				ntrain, ntest = (length(train_label), length(test_label))
 				# if we are shuffling bins, we need to keep a copy of the original data
@@ -492,7 +492,7 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 									if args.simple_shuffle
 										shuffle!(qrng, eeidx2)
 									elseif args.shuffle_latency
-										Δ = rand(Δidxtr)
+										Δ = rand(qrng, Δidxtr)
 										y = circshift(Yt[:, tt,:], (Δ,0))
 										Yt2[:,tt,:] .= y
 									else
@@ -503,7 +503,7 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 							end
 							for tt in 1:ntest
 								if args.shuffle_latency
-									Δ = rand(Δidxtt)
+									Δ = rand(qrng, Δidxtt)
 
 									# shift everything by an amount Δ
 									y = circshift(Ytest2[:,tt,:], (0, Δ))
@@ -520,10 +520,10 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 							end
 						else
 							if args.shuffle_latency
-								Δ = rand(Δidxtt)
+								Δ = rand(qrng, Δidxtt)
 								Ytest2 .= circshift(Ytest2, (0,0,Δ))
 								if args.shuffle_training
-									Δ = rand(Δidxtr)
+									Δ = rand(qrng, Δidxtr)
 									Yt2 .= circshift(Yt, (Δ,0, 0))
 								end
 							else
