@@ -94,6 +94,9 @@ function DecoderArgs(args::DecoderArgs;kvs...)
 	DecoderArgs(pargs...)
 end
 
+"""
+Get the filename using a crc32c hash of the supplied arguments.
+"""
 function get_filename(args::DecoderArgs)
 	h = CRC32c.crc32c(string(args.windows))
 	h = CRC32c.crc32c(string(args.latencies), h)
