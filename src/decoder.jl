@@ -769,9 +769,9 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 								fn = fill!(similar(_perf), 0.0)
 								for tt in 1:size(Q,2)
 									# grab a random bin from the baseline
-									qv = rand()
+									qv = rand(qrng)
+									_bidx = rand(qrng, bidx)
 									if qv < 0.5
-										_bidx = rand(bidx)
 										fp .+= Q[_bidx,tt] == 2
 										nn += 1
 									else
