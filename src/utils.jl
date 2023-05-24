@@ -12,7 +12,7 @@ function is_fef(cell::String,areas::Dict{String, Dict{String,String}})
 	occursin("FEF", areas[subject][array])
 end
 
-function get_session_data(sidx::Int64, ppsth, trialidx, tlabel, rtimes, fef_idx::Vector{Int64};rtime_min=100.0, rtime_max=300.0)
+function get_session_data(sidx::Int64, ppsth, trialidx, tlabel, rtimes, fef_idx::AbstractVector{Int64};rtime_min=100.0, rtime_max=300.0)
 	all_sessions = DPHT.get_level_path.("session", get_cellnames(ppsth))
 	sessions = unique(all_sessions)
 	session = sessions[sidx]
