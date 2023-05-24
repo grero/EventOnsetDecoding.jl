@@ -738,8 +738,8 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 									# normalize
 									q ./= sum(q)
 									if args.save_full_performance
-										posterior[j,:,wi,li,il,r] .+= q
-										entropy[j,wi,li,il,r] += -sum(q.*log2.(q))
+										posterior[wl+j,:,wi,li,il,r] .+= q
+										entropy[wl+j,wi,li,il,r] += -sum(q.*log2.(q))
 									else
 										if j == midx
 											posterior[1, :, wi,li,il,r] .+= q
