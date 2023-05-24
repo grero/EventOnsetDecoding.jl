@@ -1,10 +1,12 @@
 using EventOnsetDecoding
 using EventOnsetDecoding: MultivariateStats
 using StableRNGs
+using StatsBase
 using Test
 
 
 @testset begin "Basic"
+    rng = StableRNG(1234)
     # a highly simplistic model
     bins = [-40.0, -35.0, -30.0, -25.0, -20.0, -15.0, -10.0, -5.0, 0.0, 5.0,10.0,15.0]
     nbins = length(bins)
