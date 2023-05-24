@@ -11,8 +11,8 @@ using Test
     nt = 100
     ncells = 5
     cellnames = ["animalZ/20140904/session01/array01/channel$(string(i,pad=3))/cell01" for i in 1:ncells]
-    μ = 5.0*randn(1,ncells)
-    X = 0.1*randn(nbins,nt, ncells)
+    μ = 5.0*randn(rng, 1,ncells)
+    X = 0.1*randn(rng, nbins,nt, ncells)
 
     X[8,:,:] .+= μ 
     X[9,:,:] .+= 0.75*μ
