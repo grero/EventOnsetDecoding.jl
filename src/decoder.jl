@@ -229,11 +229,11 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 							  ) where T2 <: AbstractRNG
 
 	if rseeds === nothing
-		RNGs = [RNGType(rand(UInt32)) for i in 1:args.nruns]
+		rseeds = rand(UInt32, args.nruns)
 	else
 		length(rseeds) == args.nruns || error("Please supply one RNG per run")
-		RNGs = [RNGType(r) for r in rseeds]
 	end
+	RNGs = [RNGType(r) for r in rseeds]
 	if num_cells != nothing
 		h = CRC32c.crc32c(string(num_cells), h)
 	end
