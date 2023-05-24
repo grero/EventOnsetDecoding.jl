@@ -788,7 +788,7 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 								_perf .= dropdims(sum(Q.==2,dims=2),dims=2)./size(Q,2)
 							end
 							if args.save_full_performance
-								pr[1:size(Q,1),wi, li, il, r] .= _perf
+								pr[1+wl:1+wl+size(Q,1)-1,wi, li, il, r] .= _perf
 								cpr = pr[midx, wi, li, il, r]
 								fpr = mean(pr[blidx0:blidx1, wi, li,il, r])
 							else
