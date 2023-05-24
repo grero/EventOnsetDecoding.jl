@@ -16,11 +16,11 @@ struct DecoderArgs
 	ntrain::Int64
 	ntest::Int64
 	sessionidx::AbstractVector{Int64}
+	cellidx::AbstractVector{Int64}
 	shuffle_bins::Bool
 	remove_window::Union{Nothing, Tuple{Float64, Float64}}
 	combine_locations::Bool
 	combine_training_only::Bool
-	use_area::String
 	save_full_performance::Bool
 	save_weights::Bool
 	save_projections::Bool
@@ -45,7 +45,7 @@ struct DecoderArgs
 	mixin_postcue::Bool # should we include post-cue responses in the null-class
 end
 
-function DecoderArgs(sessions, locations;kvs...)
+function DecoderArgs(sessions, locations,cellidx::AbstractVector{Int64};kvs...)
 	latencies = get(kvs, :latencies, range(100, step=-10.0, stop=0.0))
 	args = Any[]
 	push!(args, sessions)
@@ -56,11 +56,11 @@ function DecoderArgs(sessions, locations;kvs...)
 	push!(args, get(kvs, :ntrain, 1500))
 	push!(args, get(kvs, :ntest, 100))
 	push!(args, get(kvs, :sessionidx, [1:length(sessions);]))
+	push!(args, cellidx)
 	push!(args, get(kvs, :shuffle_bins, false))
 	push!(args, get(kvs, :remove_window, nothing))
 	push!(args, get(kvs, :combine_locations, false))
 	push!(args, get(kvs, :combine_training_only, false))
-	push!(args, get(kvs, :use_area, "FEF"))
 	push!(args, get(kvs, :save_full_performance, true))
 	push!(args, get(kvs, :save_weights, true))
 	push!(args, get(kvs, :save_projections, true))
@@ -94,6 +94,9 @@ function DecoderArgs(args::DecoderArgs;kvs...)
 	DecoderArgs(pargs...)
 end
 
+"""
+Get the filename using a crc32c hash of the supplied arguments.
+"""
 function get_filename(args::DecoderArgs)
 	h = CRC32c.crc32c(string(args.windows))
 	h = CRC32c.crc32c(string(args.latencies), h)
@@ -106,6 +109,7 @@ function get_filename(args::DecoderArgs)
 	end
 
 	h = CRC32c.crc32c(string(args.sessionidx), h)
+	h = CRC32c.crc32c(string(args.cellidx), h)
 	h = CRC32c.crc32c(string(args.shuffle_bins), h)
 	h = CRC32c.crc32c(string(args.locations), h)
 	if args.remove_window != nothing
@@ -116,9 +120,6 @@ function get_filename(args::DecoderArgs)
 	end
 	if args.combine_training_only
 		h = CRC32c.crc32c("combine_training_only", h)
-	end
-	if args.use_area != "FEF"
-		h = CRC32c.crc32c(args.use_area, h)
 	end
 	if args.save_full_performance == false
 		h = CRC32c.crc32c("truncate_perforance", h)
@@ -224,14 +225,15 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 							  RNGType::Type{T2}=MersenneTwister,
 							  progress_tracker::Union{Nothing, Progress}=nothing,
 							  num_cells::Union{Nothing, Int64}=nothing, do_save=true,
-							  stop_task::Threads.Atomic{Bool}=Threads.Atomic{Bool}(false)) where T2 <: AbstractRNG
+							  stop_task::Threads.Atomic{Bool}=Threads.Atomic{Bool}(false)
+							  ) where T2 <: AbstractRNG
 
 	if rseeds === nothing
-		RNGs = [RNGType(rand(UInt32)) for i in 1:args.nruns]
+		rseeds = rand(UInt32, args.nruns)
 	else
 		length(rseeds) == args.nruns || error("Please supply one RNG per run")
-		RNGs = [RNGType(r) for r in rseeds]
 	end
+	RNGs = [RNGType(r) for r in rseeds]
 	if num_cells != nothing
 		h = CRC32c.crc32c(string(num_cells), h)
 	end
@@ -251,15 +253,7 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 		rr = h5read(fname, "positive_rate")
 		f1score = h5read(fname, "f1score")
 	else
-		if args.use_area == "FEF"
-			fef_idxs = get_fef_idx(ppsths, areas)
-		elseif args.use_area == "DLPFC"
-			fef_idxs = get_dlpfc_idx(ppsths, areas)
-		elseif args.use_area == "ALL"
-			fef_idxs = [1:size(ppsths.counts,3);]
-		else
-			error("Unknown area $(args.use_area)")
-		end
+		fef_idxs = args.cellidx
 		if num_cells != nothing
 			num_cells = min(num_cells, length(fef_idxs))
 			fef_idxs = shuffle(fef_idxs)[1:num_cells]
@@ -376,7 +370,6 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 			fid["locations"] = use_locations
 			fid["bins"] = collect(bins)
 			fid["remove_window"] = args.remove_window != nothing ? [args.remove_window...] : [0.0, 0.0]
-			fid["area"] = args.use_area
 
 			if args.save_full_performance
 				pr = fill(0.0, size(Xtot,1), length(args.windows), length(args.latencies), nlocations, args.nruns)
@@ -901,7 +894,6 @@ function shuffle_decoders(nshuffles::Int64, args...;reuse=false, kvs...)
 	latencies = dargs.latencies
 	nruns = dargs.nruns
 	redo = kvs[:redo]
-	use_area = dargs.use_area
 	fname = get_filename(dargs1)
 	fname = replace(fname, ".hdf5" => "_$(nshuffles)_surrogate.hdf5")
     fname_prog = "$(fname).inprogress"
@@ -953,9 +945,6 @@ function shuffle_decoders(nshuffles::Int64, args...;reuse=false, kvs...)
             end
             if !("latencies" in keys(fid))
                 fid["latencies"] = [latencies;]
-            end
-            if !("area" in keys(fid))
-                fid["area"] = use_area
             end
             if !("perf" in keys(fid))
                 perf = create_dataset(fid, "perf", HDF5.datatype(Float64), dataspace(length(windows), length(latencies), nlocations, nshuffles),chunk=(length(windows), length(latencies), nlocations, 1))
