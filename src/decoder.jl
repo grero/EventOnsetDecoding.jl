@@ -585,17 +585,17 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 						# optionally, draw these bins from some other period
 						# random bins from the baseline
 						neidx = length(eidx)
-						fidx = fill(0, neidx)
-
+						fidx = bidx[(bidx .+ (neidx-1) .<= maximum(bidx)).&(bidx .- neidx .> 0)]
+						if length(fidx) == 0
+							error("No baseline avilable. bidx=$(bidx) neidx=$(neidx)")
+						end
 						fill!(nli, 1)
 						for it in 1:ntrain
 							if !args.at_source & args.shuffle_each_trial
 								shuffle!(qrng, eeidx2)
 							end
-							shuffle!(bidx)
-							for k in 1:neidx
-								fidx[k] = bidx[k]
-							end
+							shuffle!(qrng, fidx)
+							# make sure we are only using valid points for the slope
 							ll = train_label[it]
 							nn = nl[ll]
 							iq = nli[ll]
