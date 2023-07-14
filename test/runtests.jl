@@ -30,6 +30,9 @@ using Test
     fname = EventOnsetDecoding.get_filename(dargs)
     @test fname == "animalz_rtime_pseudo_performance_distr_84772501_v7.hdf5"
 
+    
+    _fname = EventOnsetDecoding.get_filename(dargs, UInt32(1))
+    @test _fname == "animalz_rtime_pseudo_performance_distr_3102fbf5_v7.hdf5"
     pr5, rr, f1score,fname = EventOnsetDecoding.run_rtime_decoder((counts=X, bins=bins,cellnames=cellnames), trialidx, 
                                                     tlabel, rtimes, dargs;decoder=MultivariateStats.MulticlassLDA,
                                                     redo=true, rseeds=rseeds, RNGType=StableRNG)
