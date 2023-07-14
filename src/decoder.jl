@@ -97,8 +97,8 @@ end
 """
 Get the filename using a crc32c hash of the supplied arguments.
 """
-function get_filename(args::DecoderArgs)
-	h = CRC32c.crc32c(string(args.windows))
+function get_filename(args::DecoderArgs, h::UInt32=zero(UInt32))
+	h = CRC32c.crc32c(string(args.windows),h)
 	h = CRC32c.crc32c(string(args.latencies), h)
 	h = CRC32c.crc32c(string(args.nruns), h)
 	if args.ntrain != 1500
@@ -225,8 +225,8 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 							  RNGType::Type{T2}=MersenneTwister,
 							  progress_tracker::Union{Nothing, Progress}=nothing,
 							  num_cells::Union{Nothing, Int64}=nothing, do_save=true,
-							  stop_task::Threads.Atomic{Bool}=Threads.Atomic{Bool}(false)
-							  ) where T2 <: AbstractRNG
+							  stop_task::Threads.Atomic{Bool}=Threads.Atomic{Bool}(false),
+							  h_init::UInt32=zero(UInt32)) where T2 <: AbstractRNG
 
 	if rseeds === nothing
 		rseeds = rand(UInt32, args.nruns)
@@ -243,7 +243,7 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 		nc = 3
 	end
 
-	fname = get_filename(args)
+	fname = get_filename(args, h_init)
 	if !isdir("data")
 		mkdir("data")
 	end
