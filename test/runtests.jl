@@ -1,5 +1,5 @@
 using EventOnsetDecoding
-using EventOnsetDecoding: MultivariateStats
+using EventOnsetDecoding: MultivariateStats, HDF5
 using StableRNGs
 using StatsBase
 using Test
@@ -29,9 +29,6 @@ using Test
 
     fname = EventOnsetDecoding.get_filename(dargs)
     @test fname == "animalz_rtime_pseudo_performance_distr_84772501_v7.hdf5"
-    _dargs = EventOnsetDecoding.DecoderArgs(dargs;save_sample_indices=true)
-    fname = EventOnsetDecoding.get_filename(_dargs)
-    @test fname == "animalz_rtime_pseudo_performance_distr_1d926c0e_v7.hdf5"
     
     _fname = EventOnsetDecoding.get_filename(dargs, UInt32(1))
     @test _fname == "animalz_rtime_pseudo_performance_distr_3102fbf5_v7.hdf5"
@@ -42,6 +39,17 @@ using Test
     @test f1score[:] ≈ fill(1.0, dargs.nruns)
     @test pr5[8,1,1,1,:] ≈ fill(1.0, dargs.nruns)
     @test pr5[1:7,1,1,1,:] ≈ fill(0.0, 7, dargs.nruns)
+
+    #test sample_index
+    _dargs = EventOnsetDecoding.DecoderArgs(dargs;save_sample_indices=true)
+    fname = EventOnsetDecoding.get_filename(_dargs)
+    @test fname == "animalz_rtime_pseudo_performance_distr_1d926c0e_v7.hdf5"
+
+    pr5, rr, f1score,fname = EventOnsetDecoding.run_rtime_decoder((counts=X, bins=bins,cellnames=cellnames), trialidx, 
+                                                    tlabel, rtimes, _dargs;decoder=MultivariateStats.MulticlassLDA,
+                                                    redo=true, rseeds=rseeds, RNGType=StableRNG)
+
+    @test "training_trial_idx" in keys(HDF5.h5open(fname))
 
     # test precision
     bins = [-60.0, -55.0, -50.0, -45.0, -40.0, -35.0, -30.0, -25.0, -20.0, -15.0, -10.0, -5.0, 0.0, 5.0,10.0,15.0]
