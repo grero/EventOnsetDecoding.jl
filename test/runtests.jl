@@ -25,11 +25,13 @@ using Test
     rseeds = UInt32[0xaa815070, 0xcb646653, 0x584bf898, 0xd099425a, 0x20e80af4]
     dargs = EventOnsetDecoding.DecoderArgs(["animalZ/20140904/session01"],[1],1:ncells, windows=[5.0], latencies=[0.0], 
                                             difference_decoder=true,rtime_min=0.0, rtime_max=1.0,
-                                            baseline_end=-10.0,nruns=5, mixin_postcue=true)
+                                            baseline_end=-10.0,nruns=5, mixin_postcue=true, save_sample_indices=false)
 
     fname = EventOnsetDecoding.get_filename(dargs)
     @test fname == "animalz_rtime_pseudo_performance_distr_84772501_v7.hdf5"
-
+    _dargs = EventOnsetDecoding.DecoderArgs(dargs;save_sample_indices=true)
+    fname = EventOnsetDecoding.get_filename(_dargs)
+    @test fname == "animalz_rtime_pseudo_performance_distr_1d926c0e_v7.hdf5"
     
     _fname = EventOnsetDecoding.get_filename(dargs, UInt32(1))
     @test _fname == "animalz_rtime_pseudo_performance_distr_3102fbf5_v7.hdf5"
