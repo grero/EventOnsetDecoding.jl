@@ -43,6 +43,7 @@ struct DecoderArgs
 	rtime_min::Float64
 	rtime_max::Float64
 	mixin_postcue::Bool # should we include post-cue responses in the null-class
+	save_sample_indices::Bool # whether to save the indices of individual trials
 end
 
 function DecoderArgs(sessions, locations,cellidx::AbstractVector{Int64};kvs...)
@@ -83,6 +84,7 @@ function DecoderArgs(sessions, locations,cellidx::AbstractVector{Int64};kvs...)
 	push!(args, get(kvs, :rtime_min, 100.0))
 	push!(args, get(kvs, :rtime_max, 300.0))
 	push!(args, get(kvs, :mixin_postcue, false))
+	push!(args, get(kvs, :save_sample_indices, false))
 	DecoderArgs(args...)
 end
 
@@ -194,7 +196,9 @@ function get_filename(args::DecoderArgs, h::UInt32=zero(UInt32))
 	if args.mixin_postcue
 		h = CRC32c.crc32c(string(true), h)
 	end
-
+	if args.save_sample_indices
+		h = CRC32c.crc32c("save_sample_indices", h)
+	end
 	qq = string(h, base=16)
 	subject = lowercase(join(unique(DPHT.get_level_name.("subject", args.sessions)), '_'))
 	fname = "$(subject)_rtime_pseudo_performance_distr_$(qq)_v7.hdf5"
@@ -384,6 +388,10 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 				posterior = fill(0.0, 1, nc, length(args.windows), length(args.latencies), nlocations, args.nruns)
 				entropy = fill(0.0, 1, length(args.windows), length(args.latencies), nlocations, args.nruns)
 			end
+			if args.save_sample_indices
+				training_trial_idx = create_dataset(fid, "training_trial_idx",HDF5.datatype(Int64), dataspace(size(Xtot,3), args.ntrain, args.nruns),
+													chunk=(size(Xtot,3), args.ntrain, 1))
+			end
 			f1score = fill(0.0, length(args.windows), length(args.latencies), nlocations,args.nruns)
 			f1score_ = create_dataset(fid, "f1score", HDF5.datatype(Float64), dataspace(length(args.windows), length(args.latencies), nlocations, args.nruns), chunk=(length(args.windows), length(args.latencies), nlocations, 1))
 
@@ -398,8 +406,14 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 				qrng = RNGs[r]
 				# private copy for each thread so that we can shuffle it
 				# TODO: Include post-cue response as well.
-				Yt, train_label,test_label =  sample_trials(permutedims(Xtot2, [3,2,1]), label_tot;RNG=qrng,ntrain=args.ntrain, ntest=args.ntest)
+				Yt, train_label,test_label,trainidx,testidx =  sample_trials(permutedims(Xtot2, [3,2,1]), label_tot;RNG=qrng,ntrain=args.ntrain, ntest=args.ntest, return_indices=true)
 				@assert size(Yt,1) == size(Xtot2, 1)
+				if args.save_sample_indices
+					lock(sl)
+					training_trial_idx[:,:,r] = trainidx
+					flush(fid)
+					unlock(sl)
+				end
 				ntrain, ntest = (length(train_label), length(test_label))
 				# if we are shuffling bins, we need to keep a copy of the original data
 				if !args.at_source & (args.shuffle_bins | args.shuffle_latency)
