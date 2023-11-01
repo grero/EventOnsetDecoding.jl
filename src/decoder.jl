@@ -288,7 +288,10 @@ function run_rtime_decoder(ppsths, trialidx::Vector{Vector{Int64}}, tlabel::Vect
 		end
 		for i in args.sessionidx
 			X, _label, _rtime = get_session_data(args.sessions[i],ppsths, trialidx, tlabel, rtimes, fef_idxs;rtime_min=args.rtime_min,
-												 											  rtime_max=args.rtime_max)
+													 											  rtime_max=args.rtime_max)
+			if X === nothing
+				continue
+			end
 			if args.reverse_bins
 				X .= X[end:-1:1, :,:]
 			end
