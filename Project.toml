@@ -1,7 +1,7 @@
 name = "EventOnsetDecoding"
 uuid = "94a68770-fbcf-47e0-90dc-76bcf70cf6cd"
 authors = ["Roger Herikstad <roger.herikstad@gmail.com>"]
-version = "0.4.0"
+version = "0.5.0"
 
 [deps]
 CRC32c = "8bf52ea8-c179-5cab-976a-9e18b702a9bc"
