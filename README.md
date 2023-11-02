@@ -20,7 +20,7 @@ Once the registry has been succesfully added, you should be able to install this
 ```
 
 This will install the package under the default environment (similar to conda environment). If you'd rather create a
-new enviroment, e.g. MyCoolAnalysis, you can first create a new directory for your new environment, change to that directory and activate it, with tese commands, making use of julia's shell mode (press `;`)
+new enviroment, e.g. MyCoolAnalysis, you can first create a new directory for your new environment, change to that directory and activate it, with these commands, making use of julia's shell mode (press `;`)
 
 ```julia
 shell> mkdir MyCoolAnalysis
@@ -29,16 +29,17 @@ shell> cd MyCoolAnalysis
 ```
 To move from shell mode back to package manager mode in he last line, simply press `]` again.
 
-Now, whenver you `add` stuff in package mananger mode, it will be added to the environment contained in MyCoolAnalysis. To run julia directory from this environment, you can start julia like you did previously, but add the option --project=., i.e.
+Now, whenver you `add` stuff in package mananger mode, it will be added to the environment contained in MyCoolAnalysis. To run julia directly from this environment, you can start julia like you did previously, but add the option --project=., i.e.
 
 ```bash
 julia --project=.
 ```
+This assumes you are already in the directory containing your environment. Optionally, you can specify path to the environment directory as well (i.e. instead of --project=. use e.g. --project=MyCoolAnalysis in the above cmmand).
 
 
 ## Usage
 
-A basic Jupyter notebook is include in notebooks/basic_tutorial.ipynb. This works just like a python notebook, except that it runs julia code. To enable julia for jupyter notebooks, it simplest way is to install the package IJulia in the global julia environment, like this
+A basic Jupyter notebook is included in [notebooks/basic_tutorial.ipynb](notebooks/basic_tutorial.ipynb). This works just like a python notebook, except that it runs julia code. To enable julia for jupyter notebooks, the simplest way is to install the package IJulia in the global julia environment, like this
 
 ```julia
 (@v1.9) pkg> add IJulia 
