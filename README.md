@@ -55,7 +55,8 @@ After installing IJulia, you can also start up a notebook server directly from j
 
 ```julia
 julia> using IJulia
-julia> notebook()
+julia> using EventOnsetDecoding
+julia> notebook(dir=joinpath(dirname(pathof(EventOnsetDecoding)), "..", "notebooks"))
 ```
 
 The `using` statement in the first line is sort of the equivalent of python's `import` statement. It makes the code contained in the `IJulia` package available in the current session.
